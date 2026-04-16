@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bias Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F2EB;
+    --surface: #FDFCF9;
+    --ink: #1A1814;
+    --ink-muted: #6B6760;
+    --ink-faint: #B8B5B0;
+    --accent: #C4402F;
+    --accent-light: #F9EBE8;
+    --correct: #2D6A4F;
+    --correct-light: #E8F4EF;
+    --wrong: #C4402F;
+    --wrong-light: #F9EBE8;
+    --border: #E0DDD6;
+    --shadow: 0 2px 12px rgba(26,24,20,0.08);
+    --shadow-lg: 0 8px 32px rgba(26,24,20,0.12);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem 4rem;
+  }
+
+  header {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .brand span {
+    color: var(--accent);
+  }
+
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    max-width: 680px;
+    margin-bottom: 2rem;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.6s ease;
+  }
+
+  .card-area {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2.5rem 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  .card-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+
+  .bias-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .aka {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .prompt {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .choice {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+    color: var(--ink);
+    line-height: 1.5;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    position: relative;
+  }
+
+  .choice:hover:not(:disabled) {
+    border-color: var(--ink-muted);
+    background: #FAF8F4;
+    transform: translateX(3px);
+  }
+
+  .choice:disabled { cursor: default; }
+
+  .choice-letter {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--ink-faint);
+    background: var(--bg);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+
+  .choice.correct {
+    background: var(--correct-light);
+    border-color: var(--correct);
+    color: var(--correct);
+    transform: translateX(0);
+  }
+
+  .choice.correct .choice-letter {
+    background: var(--correct);
+    color: white;
+  }
+
+  .choice.wrong {
+    background: var(--wrong-light);
+    border-color: var(--wrong);
+    color: var(--wrong);
+    transform: translateX(0);
+  }
+
+  .choice.wrong .choice-letter {
+    background: var(--wrong);
+    color: white;
+  }
+
+  .choice.dimmed {
+    opacity: 0.4;
+    transform: translateX(0);
+  }
+
+  .feedback {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    display: none;
+    animation: fadeUp 0.2s ease;
+  }
+
+  .feedback.show { display: block; }
+
+  .feedback.correct-fb {
+    background: var(--correct-light);
+    border: 1px solid var(--correct);
+    color: var(--correct);
+  }
+
+  .feedback.wrong-fb {
+    background: var(--wrong-light);
+    border: 1px solid var(--wrong);
+    color: var(--wrong);
+  }
+
+  .feedback-head {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .next-btn {
+    width: 100%;
+    max-width: 680px;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    display: none;
+  }
+
+  .next-btn:hover {
+    background: #2D2B27;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+
+  .next-btn.show { display: block; }
+
+  .mastered-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--correct);
+    background: var(--correct-light);
+    border: 1px solid var(--correct);
+    border-radius: 99px;
+    padding: 3px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-enter {
+    animation: cardIn 0.3s ease;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .streak-toast {
+    position: fixed;
+    top: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 0.6rem 1.25rem;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .streak-toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .reset-btn {
+    background: none;
+    border: none;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 2rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .reset-btn:hover { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+
+<div class="streak-toast" id="toastEl"></div>
+
+<header>
+  <div class="brand">Bias<span>.</span>Quiz</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="statStreak">0</div>
+      <div class="stat-label">Streak</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-val" id="statScore">0</div>
+      <div class="stat-label">Correct</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-val" id="statMastered">0</div>
+      <div class="stat-label">Mastered</div>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar-wrap">
+  <div class="progress-label">
+    <span>Mastery progress</span>
+    <span id="progressPct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</div>
+
+<div class="card-area">
+  <div class="question-card card-enter" id="questionCard">
+    <div class="card-eyebrow">What does this bias describe?</div>
+    <div class="bias-name" id="biasName">Loading…</div>
+    <div class="aka" id="biasAka"></div>
+    <div class="prompt" style="margin-top:1.5rem">Choose the correct definition</div>
+  </div>
+
+  <div class="choices" id="choicesEl"></div>
+
+  <div class="feedback" id="feedbackEl">
+    <div class="feedback-head" id="feedbackHead"></div>
+    <div id="feedbackBody"></div>
+  </div>
+
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next bias →</button>
+  <button class="reset-btn" onclick="resetProgress()">Reset progress</button>
+</div>
+
+<script>
+const BIASES = [
+  { name: "Abilene paradox", def: "A group collectively decides on an action that no individual member actually wants, because each person mistakenly believes the others want it." },
+  { name: "Absent-mindedness", def: "Lapses in attention that cause forgetting of intentions or actions, often due to focusing on something else." },
+  { name: "Action bias", def: "The tendency to favor taking action over inaction, even when inaction would be the better choice." },
+  { name: "Actor-observer bias", def: "Attributing your own actions to situational factors while attributing others' actions to their character or personality." },
+  { name: "Affect heuristic", def: "Letting emotions and feelings guide decisions rather than careful analysis of facts and probabilities." },
+  { name: "Ambiguity effect", def: "Preferring options with known probabilities over options with unknown or uncertain probabilities, even if the unknown option may be better." },
+  { name: "Anchoring bias", def: "Over-relying on the first piece of information encountered when making decisions, even if it is irrelevant." },
+  { name: "Anecdotal fallacy", def: "Using a personal story or isolated example as evidence for a general claim, ignoring statistical data." },
+  { name: "Anthropomorphism", def: "Attributing human characteristics, emotions, or intentions to animals, objects, or abstract concepts." },
+  { name: "Appeal to novelty", def: "Assuming something is better or more correct simply because it is newer or more modern." },
+  { name: "Appeal to probability fallacy", def: "Treating something as certain or inevitable just because it is possible or likely." },
+  { name: "Argument from fallacy", def: "Assuming a conclusion is false because the argument used to support it contains a logical fallacy." },
+  { name: "Armchair fallacy", def: "Believing theoretical reasoning alone is sufficient to reach conclusions without empirical testing or real-world observation." },
+  { name: "Attentional bias", def: "The tendency for emotionally dominant stimuli or thoughts to capture attention and distort perception." },
+  { name: "Authority bias", def: "Giving excessive weight to the opinion of an authority figure, regardless of the actual evidence or their expertise in the relevant area." },
+  { name: "Automation bias", def: "Over-trusting automated systems or algorithms and ignoring contradictory information from other sources." },
+  { name: "Availability heuristic", def: "Judging the likelihood of events based on how easily examples come to mind, rather than actual statistics." },
+  { name: "Baader-Meinhof Phenomenon", aka: "Frequency Bias", def: "After noticing something for the first time, you start seeing it everywhere — creating the illusion that it has suddenly become more common." },
+  { name: "Backfire effect", def: "When confronted with evidence that contradicts a belief, doubling down on that belief rather than updating it." },
+  { name: "Bandwagon effect", def: "Adopting beliefs or behaviors because many other people do, regardless of the underlying evidence." },
+  { name: "Barnum effect", aka: "Forer effect", def: "Accepting vague, general personality descriptions as uniquely accurate for yourself, as with horoscopes." },
+  { name: "Base rate fallacy", def: "Ignoring general statistical information in favor of specific, vivid details when making judgments." },
+  { name: "Belief bias", def: "Judging the strength of an argument based on whether you believe its conclusion, rather than its logical validity." },
+  { name: "Ben Franklin effect", def: "Liking someone more after doing them a favor, because we rationalize that we must like them to have helped them." },
+  { name: "Bikeshedding", aka: "Law of triviality", def: "Spending disproportionate time on trivial details while neglecting more complex, important issues." },
+  { name: "Bizarreness effect", def: "Bizarre or unusual information is remembered better than common, ordinary information." },
+  { name: "Blind spot bias", def: "Recognizing cognitive biases in others while failing to see them in yourself." },
+  { name: "Bottom-dollar effect", def: "Being more dissatisfied with purchases made when spending the last of your money, due to financial stress." },
+  { name: "Bounded rationality", def: "Making satisfactory but not necessarily optimal decisions due to limited information, cognitive capacity, and time." },
+  { name: "Bucket error", def: "Forcing items into pre-existing categories even when they don't fit, distorting judgment." },
+  { name: "Bundling bias", def: "Valuing a group of items or experiences as less than the sum of their individual values." },
+  { name: "Bye-now effect", def: "Saying goodbye makes us think of time passing, which leads us to think of future purchases and spend more." },
+  { name: "Bystander effect", def: "Individuals are less likely to help in an emergency when others are present, assuming someone else will act." },
+  { name: "Cashless effect", def: "Spending more freely when using non-cash payment methods because the pain of loss feels less immediate." },
+  { name: "Category size bias", def: "Overestimating the frequency of items in larger categories and underestimating them in smaller ones." },
+  { name: "Cheerleader effect", def: "People appear more attractive when seen in a group than when seen individually." },
+  { name: "Chesterton's fence", def: "The principle that you should not remove or change something until you understand why it was put there in the first place." },
+  { name: "Choice overload", aka: "Paradox of choice", def: "Having too many options leads to worse decisions, less satisfaction, and sometimes complete paralysis." },
+  { name: "Choice-supportive bias", def: "Remembering past choices as better than they actually were, and overlooking their flaws." },
+  { name: "Clustering illusion", def: "Seeing patterns or clusters in random data, believing they are meaningful when they are not." },
+  { name: "Cognitive dissonance", def: "The discomfort felt when holding two contradictory beliefs or when behavior conflicts with beliefs, leading to rationalization." },
+  { name: "Commitment bias", def: "Remaining consistent with a prior commitment even when it no longer makes sense, to avoid appearing inconsistent." },
+  { name: "Confabulation", def: "Unconsciously fabricating memories or explanations to fill in gaps, without intending to deceive." },
+  { name: "Confirmation bias", def: "Seeking out, interpreting, and remembering information in a way that confirms your existing beliefs." },
+  { name: "Congruence bias", def: "Testing hypotheses only through direct testing rather than also testing alternative hypotheses." },
+  { name: "Conjunction fallacy", def: "Judging a specific scenario as more likely than a broader one, even though the broader one must statistically be more probable." },
+  { name: "Conservatism", def: "Updating beliefs too slowly when presented with new evidence, staying anchored to prior beliefs." },
+  { name: "Context effect", def: "The influence of environmental context on cognition and memory — memories are easier to recall in the environment where they were formed." },
+  { name: "Continued influence effect", def: "Continuing to be influenced by misinformation even after it has been clearly corrected." },
+  { name: "Contrast effect", def: "Evaluating something differently based on what it is compared to, rather than on its own merits." },
+  { name: "Cross-race effect", def: "The tendency to more easily recognize faces of people of one's own race than faces of other races." },
+  { name: "Cryptomnesia", def: "Mistaking a forgotten memory for an original idea — accidentally plagiarizing your own past experiences." },
+  { name: "Cue-dependent forgetting", def: "Failing to recall information because the retrieval cues present at recall differ from those present during encoding." },
+  { name: "Curse of knowledge", aka: "Curse of expertise", def: "Once you know something well, it becomes difficult to imagine not knowing it, making it hard to explain to novices." },
+  { name: "Decision fatigue", def: "The deteriorating quality of decisions made after a long session of decision-making, as mental energy depletes." },
+  { name: "Declinism", def: "The tendency to view the past more favorably and the future more negatively than is warranted." },
+  { name: "Decoy effect", def: "Introducing a third option makes one of the original two seem more attractive by comparison." },
+  { name: "Defensive attribution hypothesis", def: "Attributing more blame to perpetrators whose actions are more similar to our own situation, out of self-protection." },
+  { name: "Delmore effect", def: "Being more specific and ambitious about goals for others than for oneself." },
+  { name: "Denomination effect", def: "Being more likely to spend money when it's in smaller denominations than in a single large bill of the same value." },
+  { name: "Disposition effect", def: "Selling assets that have gained in value too soon while holding on to assets that have lost value too long." },
+  { name: "Distinction bias", def: "When comparing options simultaneously, differences seem larger than when evaluating them separately." },
+  { name: "Dunning-Kruger effect", def: "People with limited knowledge in a domain overestimate their competence, while true experts tend to underestimate theirs." },
+  { name: "Duration neglect", def: "When evaluating an experience, the length of the experience has little impact on how it is remembered — only the peak and end matter." },
+  { name: "Effort justification", def: "Valuing an outcome more if you worked hard to achieve it, regardless of its actual worth." },
+  { name: "Egocentric bias", def: "Relying too heavily on your own perspective and giving yourself too much credit in collaborative outcomes." },
+  { name: "Empathy gap", def: "Underestimating the influence of emotional or physical states on behavior and decision-making when in a different state." },
+  { name: "Endowment effect", def: "Placing higher value on things simply because you own them, compared to what you'd pay to acquire them." },
+  { name: "Essentialism", def: "Assuming that things have a set of fixed, intrinsic characteristics that define their true nature." },
+  { name: "Expectation bias", def: "Allowing prior expectations to distort perception and interpretation of new information." },
+  { name: "Experimenter's bias", def: "The tendency of researchers to influence the results of their experiments in line with their expectations." },
+  { name: "Extrinsic incentive bias", def: "Assuming others are primarily motivated by external rewards (money, praise) while underestimating intrinsic motivations." },
+  { name: "Fading affect bias", def: "Negative emotions associated with negative memories fade more quickly than those associated with positive memories." },
+  { name: "False consensus effect", aka: "Consensus bias", def: "Overestimating how much other people share your opinions, beliefs, and behaviors." },
+  { name: "False memory", def: "Confidently recalling an event that did not actually happen, or misremembering the details of a real event." },
+  { name: "Focusing effect", def: "Placing too much importance on one aspect of an event or decision, causing an error in predicting the future impact." },
+  { name: "Framing effect", def: "Drawing different conclusions from the same information depending on how that information is presented." },
+  { name: "Functional fixedness", def: "Only being able to see an object's conventional use, preventing creative problem-solving with that object." },
+  { name: "Fundamental attribution error", aka: "Correspondence bias", def: "Overemphasizing personality-based explanations for others' behavior while underemphasizing situational factors." },
+  { name: "Gambler's fallacy", def: "Believing that past random events affect the probability of future random events — e.g., that a long run of heads makes tails more likely." },
+  { name: "Generation effect", def: "Information generated by oneself is remembered better than information passively read." },
+  { name: "Google effect", aka: "Digital amnesia", def: "The tendency to forget information that can be easily looked up online, outsourcing memory to search engines." },
+  { name: "Group attribution error", def: "Assuming that the decisions or behaviors of a group reflect the preferences of every individual in that group." },
+  { name: "Groupthink", def: "The desire for harmony and conformity in a group overrides realistic appraisal of alternatives, leading to poor decisions." },
+  { name: "Halo effect", def: "A positive impression in one area (e.g., attractiveness) creates a positive impression in unrelated areas (e.g., intelligence)." },
+  { name: "Hard-easy effect", def: "Overconfidence on hard tasks and underconfidence on easy tasks when predicting your own performance." },
+  { name: "Hindsight bias", aka: "'Knew-it-all-along' effect", def: "After learning an outcome, believing you had predicted it all along, even if you could not have known." },
+  { name: "Hippo problem", def: "The highest-paid person's opinion dominates group decisions, regardless of their actual expertise or the quality of their reasoning." },
+  { name: "Hofstadter's law", aka: "Planning fallacy", def: "Tasks always take longer than expected, even when you account for Hofstadter's Law itself." },
+  { name: "Hot-hand fallacy", def: "Believing that a person who has had recent successes has a higher probability of further success — the opposite of the gambler's fallacy." },
+  { name: "Humor effect", def: "Humorous information is remembered more easily than non-humorous information." },
+  { name: "Hyperbolic discounting", def: "Preferring smaller rewards now over larger rewards in the future, with the bias decreasing as the rewards move further into the future." },
+  { name: "Identifiable victim effect", def: "Feeling more compelled to help a single, identified individual in need than a large, anonymous group of people." },
+  { name: "IKEA effect", def: "Placing a disproportionately high value on things you partially created yourself, regardless of their objective quality." },
+  { name: "Illusion of asymmetric insight", def: "Believing you understand others better than they understand you, and that your group understands other groups better than those groups understand you." },
+  { name: "Illusion of control", def: "Overestimating your ability to control events that are actually determined by chance." },
+  { name: "Illusion of external agency", def: "Attributing random or self-generated events to an external agent or force acting on you." },
+  { name: "Illusion of transparency", def: "Overestimating how much your internal states (emotions, intentions) are visible to others." },
+  { name: "Illusion of validity", def: "Believing your predictions and judgments are accurate, even when evidence shows they are not better than chance." },
+  { name: "Illusory correlation", def: "Perceiving a relationship between two variables when none actually exists, especially when one is distinctive or memorable." },
+  { name: "Illusory superiority", def: "Overestimating your own qualities and abilities relative to others — believing you are above average in most things." },
+  { name: "Illusory truth effect", aka: "Illusion of truth", def: "Repeated exposure to a statement increases the likelihood of believing it to be true, regardless of its accuracy." },
+  { name: "Impact bias", def: "Overestimating the emotional impact — both intensity and duration — of future events on your happiness." },
+  { name: "Implicit associations", def: "Unconscious mental connections between concepts that influence judgments and behavior without awareness." },
+  { name: "Implicit stereotypes", def: "Unconsciously held beliefs about social groups that affect perception and behavior, even when consciously rejecting prejudice." },
+  { name: "In-group favoritism", aka: "In-group bias", def: "Treating members of your own group more favorably than members of other groups." },
+  { name: "Incentivization", def: "Behavior and decisions are shaped by incentives in ways that may not align with the intended goal of those incentives." },
+  { name: "Information bias", def: "Seeking more information than is actually necessary to make a good decision, causing paralysis." },
+  { name: "Insensitivity to sample size", def: "Failing to account for sample size when evaluating statistics — treating a small sample as equally reliable as a large one." },
+  { name: "Irrational escalation", def: "Continuing to invest in a failing course of action because of prior investments, even when logic says to stop." },
+  { name: "Just-world hypothesis", def: "Believing the world is fundamentally fair and that people get what they deserve — good or bad." },
+  { name: "Lag effect", def: "Information learned across spaced sessions is retained better than the same amount of information learned in a single session." },
+  { name: "Lake Wobegone effect", def: "The tendency for individuals to overestimate their own abilities relative to others — believing themselves above average." },
+  { name: "Law of narrative gravity", def: "Stories and events are pulled toward satisfying narrative shapes, causing us to interpret and remember them through familiar story arcs." },
+  { name: "Less-is-better effect", def: "A smaller set or lesser quantity is sometimes judged more favorably than a larger one when evaluated separately." },
+  { name: "Leveling and sharpening", def: "In memory and retelling, details are either minimized (leveling) or emphasized (sharpening) to create a more coherent narrative." },
+  { name: "Levels of processing", def: "Memory retention is stronger when information is processed more deeply and meaningfully during encoding." },
+  { name: "List-length effect", def: "Recall of individual items decreases as the length of the list increases, due to interference." },
+  { name: "Look-elsewhere effect", def: "Statistical significance found in one part of a dataset seems less impressive when you account for all the comparisons that were made." },
+  { name: "Loss aversion", def: "The pain of losing something feels approximately twice as powerful as the pleasure of gaining something equivalent." },
+  { name: "Magic number 7±2", def: "The average person can hold only 7 (plus or minus 2) items in working memory at once." },
+  { name: "Masked man fallacy", def: "Substituting names for descriptions and drawing invalid identity conclusions — assuming that because you don't know X is Y, X is not Y." },
+  { name: "Maslow's hammer", def: "Over-relying on a familiar tool or approach for every problem, regardless of whether it is appropriate." },
+  { name: "Memory inhibition", def: "Remembering some information actively suppresses the recall of related information." },
+  { name: "Mental accounting", def: "Treating money differently depending on its source or intended use, rather than as a fungible resource." },
+  { name: "Mere exposure effect", aka: "Familiarity principle", def: "Developing a preference for things simply because you have been repeatedly exposed to them." },
+  { name: "Misattribution of memory", def: "Correctly remembering information but misattributing it to a wrong source." },
+  { name: "Misinformation effect", def: "Post-event information contaminates memories of the original event, altering what is recalled." },
+  { name: "Modality effect", def: "Memory is stronger for information presented in certain sensory modalities — particularly for information heard rather than read." },
+  { name: "Money illusion", def: "Focusing on nominal monetary values rather than real values adjusted for inflation." },
+  { name: "Mood-congruent memory bias", def: "Recalling memories that are consistent with your current emotional mood more easily than mood-incongruent memories." },
+  { name: "Moral credential effect", def: "Having done something moral in the past makes a person more likely to act immorally later, as if the earlier act licenses future behavior." },
+  { name: "Moral luck", def: "Judging people's moral worth based on outcomes that were beyond their control." },
+  { name: "Motivating uncertainty effect", def: "Uncertainty about an outcome can increase motivation and engagement compared to a certain outcome." },
+  { name: "Murphy's law", def: "Anything that can go wrong will go wrong — a form of pessimism about outcomes used to justify excessive caution." },
+  { name: "Naive allocation", aka: "Diversification bias", def: "Dividing resources equally among available options regardless of their actual merits or risk profiles." },
+  { name: "Naïve cynicism", def: "Expecting others to be more egotistically biased than they actually are." },
+  { name: "Naïve realism", def: "Believing that you see the world as it objectively is, while others who disagree are biased or misinformed." },
+  { name: "Negativity bias", def: "Negative events, emotions, and information have a greater impact on thoughts and decisions than equally positive ones." },
+  { name: "Neglect of probability", def: "Disregarding probability when making decisions under uncertainty, reacting to the potential outcome rather than its likelihood." },
+  { name: "Next-in-line effect", def: "People are less able to recall what was said just before they were about to speak, due to focusing on their own upcoming statement." },
+  { name: "Noble edge effect", def: "Consumers prefer companies perceived as ethical or socially responsible, even when the product is inferior." },
+  { name: "Normalcy bias", def: "Underestimating the likelihood and impact of disasters, assuming that things will function as they normally do." },
+  { name: "Nostalgia effect", def: "Viewing the past more favorably than the present, and attributing more value to past experiences than current ones." },
+  { name: "Not invented here", def: "Rejecting ideas, products, or solutions that originate from outside your own group, even when they are superior." },
+  { name: "Observer effect", def: "The act of observing or measuring something changes that thing's behavior or properties." },
+  { name: "Observer expectancy effect", aka: "Experimenter expectancy effect", def: "A researcher's expectations unconsciously influence participants, causing results to align with the hypothesis." },
+  { name: "Occam's razor", def: "Among competing hypotheses, the simplest one — requiring the fewest assumptions — should be preferred." },
+  { name: "Omission bias", def: "Judging harmful actions as worse than equally harmful inactions, even when outcomes are the same." },
+  { name: "Optimism bias", def: "Overestimating the likelihood of positive events and underestimating the likelihood of negative events happening to you." },
+  { name: "Ostrich effect", aka: "Ostrich problem", def: "Avoiding monitoring a situation or receiving information about it when the news is expected to be bad." },
+  { name: "Out-group homogeneity bias", def: "Perceiving members of other groups as more similar to each other than members of your own group." },
+  { name: "Outcome bias", def: "Evaluating the quality of a decision based on its outcome rather than the quality of the reasoning at the time." },
+  { name: "Overconfidence effect", def: "Having excessive confidence in your own abilities, knowledge, or predictions beyond what is objectively warranted." },
+  { name: "Overjustification effect", def: "Receiving an external reward for something you already enjoy reduces your intrinsic motivation to do it." },
+  { name: "Pareidolia", def: "Perceiving a meaningful pattern — especially a face — in random or ambiguous stimuli." },
+  { name: "Part-list cueing effect", def: "Presenting part of a list as cues during recall actually impairs recall of the remaining items." },
+  { name: "Peak-end rule", def: "People judge an experience almost entirely by how it felt at its most intense point and at its end." },
+  { name: "Peltzman effect", def: "People engage in riskier behavior when safety measures are introduced, offsetting the safety gains." },
+  { name: "Pessimism bias", def: "Overestimating the likelihood of negative events occurring compared to positive ones." },
+  { name: "Picture superiority effect", def: "Concepts are remembered more easily when they are presented as pictures rather than words." },
+  { name: "Placebo effect", def: "Believing a treatment will work can cause it to produce real physiological or psychological benefits." },
+  { name: "Positivity effect", def: "Older adults tend to favor positive information over negative information in attention and memory." },
+  { name: "Post-purchase rationalization", def: "After making a purchase, convincing yourself it was a wise decision regardless of the actual evidence." },
+  { name: "Prejudice", def: "Holding preconceived opinions about a group or person that are not based on reason or actual experience." },
+  { name: "Primacy effect", def: "Items presented first in a list are better remembered than those in the middle." },
+  { name: "Priming", def: "Exposure to one stimulus influences the response to a subsequent stimulus, without conscious awareness." },
+  { name: "Pro-innovation bias", def: "An excessive enthusiasm for innovation that causes overvaluation of a technology's usefulness and undervaluation of its limitations." },
+  { name: "Processing difficulty effect", def: "Information that is harder to process is sometimes remembered better, as the effort increases depth of encoding." },
+  { name: "Projection bias", def: "Overestimating how much future preferences and feelings will resemble current ones." },
+  { name: "Pseudocertainty effect", def: "Preferring options that seem certain within a specific stage of a decision, even if the overall outcome is uncertain." },
+  { name: "Publication bias", def: "Studies with statistically significant results are more likely to be published, skewing the scientific literature." },
+  { name: "Reactance", def: "When a freedom is threatened or removed, motivation to restore it increases, often causing the opposite behavior to what was demanded." },
+  { name: "Reactive devaluation", def: "Devaluing a proposal or concession simply because it originated from an opponent or adversary." },
+  { name: "Recency effect", def: "Items presented at the end of a list are recalled better than those in the middle." },
+  { name: "Recency illusion", def: "Believing a word, phrase, or usage is new simply because you only recently noticed it." },
+  { name: "Regret aversion", def: "Avoiding actions that might lead to regret, even when those actions would be rationally beneficial." },
+  { name: "Representativeness heuristic", def: "Judging the probability of events by how closely they resemble a prototype, ignoring base rate information." },
+  { name: "Response bias", def: "The tendency of survey respondents to answer questions inaccurately, especially in socially desirable ways." },
+  { name: "Restraint bias", def: "Overestimating your ability to control impulsive behavior when temptation is present." },
+  { name: "Reverse psychology", def: "Advocating for the opposite of what you want in order to prompt someone to choose what you actually want." },
+  { name: "Rhyme as reason effect", def: "Rhyming statements are judged to be more accurate or trustworthy than equivalent non-rhyming statements." },
+  { name: "Risk compensation", def: "Behaving less cautiously when perceived safety increases, thereby maintaining a constant level of risk." },
+  { name: "Rosy retrospection", def: "Rating past events more positively than current events, with the positive aspects becoming more prominent over time." },
+  { name: "Salience bias", def: "Focusing on information that is most prominent or emotionally striking while ignoring less salient, equally important data." },
+  { name: "Sapir-Whorf-Korzybski hypothesis", aka: "Linguistic Relativity", def: "The language you speak shapes and constrains the thoughts you can think and how you perceive reality." },
+  { name: "Selective perception", def: "Filtering what we pay attention to based on our background, expectations, and attitudes." },
+  { name: "Self-consistency bias", def: "Revising memories of past attitudes to match current ones, creating a false impression of consistency over time." },
+  { name: "Self-relevance effect", def: "Information related to oneself is remembered better than information about others or abstract concepts." },
+  { name: "Self-serving bias", def: "Attributing successes to your own character and abilities while blaming failures on external circumstances." },
+  { name: "Semmelweis reflex", def: "Reflexively rejecting new evidence or knowledge because it contradicts established norms or beliefs." },
+  { name: "Serial position effect", def: "The tendency to recall the first and last items in a list better than those in the middle." },
+  { name: "Serial recall effect", def: "Items in a sequence are recalled in their original order more easily than in random order." },
+  { name: "Sexual overperception bias", def: "Overestimating another person's sexual interest in you, interpreting friendly behavior as flirtation." },
+  { name: "Social comparison bias", def: "Disliking people who threaten your sense of competence in an area important to your identity." },
+  { name: "Social desirability bias", def: "Answering questions and behaving in ways you believe will be viewed favorably by others, rather than truthfully." },
+  { name: "Source confusion", aka: "Source misattribution", def: "Correctly remembering information but forgetting or misremembering where or how you learned it." },
+  { name: "Spacing effect", def: "Information studied across multiple spaced sessions is retained more effectively than the same information crammed in one session." },
+  { name: "Spotlight effect", def: "Overestimating how much others notice and pay attention to your appearance or behavior." },
+  { name: "Status quo bias", def: "Preferring the current state of affairs and viewing any change from it as a loss." },
+  { name: "Stereotyping", def: "Applying fixed, oversimplified generalizations about a group to every individual within that group." },
+  { name: "Streetlight effect", def: "Searching for something only where it is easiest to look, rather than where it is most likely to be found." },
+  { name: "Subadditivity effect", def: "Estimating the probability of a whole is less than the sum of the probabilities of its parts." },
+  { name: "Subjective validation", def: "Perceiving a statement as meaningful and accurate if it has personal significance, regardless of its objective validity." },
+  { name: "Suffix effect", def: "Adding a suffix or extra item at the end of a list impairs recall of the final items in that list." },
+  { name: "Suggestibility", def: "Accepting and incorporating information suggested by others into one's own memories or beliefs." },
+  { name: "Survivorship bias", def: "Focusing on things that survived a selection process while overlooking things that did not, leading to false conclusions." },
+  { name: "Swimmer's body illusion", def: "Confusing selection effects with treatment effects — e.g., believing swimming creates an ideal physique, when actually those with ideal physiques self-select into swimming." },
+  { name: "System justification", def: "The tendency to defend and bolster the status quo, even when it is disadvantageous to the individual doing so." },
+  { name: "Tachypsychia", def: "A perception that time slows down during intense stress or danger, causing events to feel like they are in slow motion." },
+  { name: "Take-the-best heuristic", def: "Making decisions by considering only the most important attribute and ignoring all others once a difference is found." },
+  { name: "Telescoping effect", def: "Remembering distant past events as more recent and recent events as more distant than they actually are." },
+  { name: "Testing effect", def: "Actively retrieving information through testing improves long-term retention more than passively rereading it." },
+  { name: "The illusion of explanatory depth", def: "Believing you understand a complex system far better than you actually do, revealed only when you try to explain it step by step." },
+  { name: "The Pygmalion effect", def: "Higher expectations placed on a person lead to improved performance, as expectations shape reality." },
+  { name: "Sunk cost fallacy", aka: "Escalation of commitment", def: "Continuing to invest time, money, or effort into something because of prior investment, even when cutting losses would be rational." },
+  { name: "Third-person effect", def: "Believing media and persuasive messages have a greater effect on other people than on yourself." },
+  { name: "Time-saving bias", def: "Underestimating how much time is saved by increasing speed on a journey, and overestimating it for low-speed increases." },
+  { name: "Tip of the tongue phenomenon", def: "The sensation of knowing a word or name but being temporarily unable to retrieve it from memory." },
+  { name: "Trait ascription bias", def: "Viewing yourself as variable and situation-dependent, while viewing others as having fixed personality traits." },
+  { name: "Ultimate attribution error", def: "Explaining negative behavior by out-group members as due to their disposition, while explaining positive behavior as due to luck or special circumstances." },
+  { name: "Unit bias", def: "Feeling compelled to complete a given unit of something — a portion, a container, a task — regardless of whether completing it is optimal." },
+  { name: "Von Restorff effect", def: "An item that stands out from its surroundings — by color, size, or oddity — is more likely to be remembered than similar surrounding items." },
+  { name: "Weber–Fechner law", def: "The perceived intensity of a stimulus is proportional to the logarithm of its actual intensity — we notice proportional changes, not absolute ones." },
+  { name: "Well-traveled road effect", def: "Underestimating the time it takes to travel a familiar route compared to an unfamiliar one of the same length." },
+  { name: "Zeigarnik effect", def: "Unfinished tasks are remembered better than completed ones, as the brain keeps incomplete goals active in memory." },
+  { name: "Zero sum bias", def: "Perceiving a situation as a competition with a fixed total where one person's gain is another's loss, even when it is not." },
+  { name: "Zero-risk bias", def: "Preferring to eliminate a small risk completely over reducing a larger risk by a greater amount." }
+];
+
+// Spaced repetition state
+let state = JSON.parse(localStorage.getItem('biasQuizState') || 'null') || {
+  scores: {}, // biasName -> { correct, incorrect, interval, nextDue }
+  totalCorrect: 0,
+  streak: 0
+};
+
+let currentBias = null;
+let answered = false;
+
+function saveState() {
+  localStorage.setItem('biasQuizState', JSON.stringify(state));
+}
+
+function getMastered() {
+  return Object.values(state.scores).filter(s => (s.correct || 0) >= 3 && (s.correct || 0) > (s.incorrect || 0) * 2).length;
+}
+
+function getWeight(bias) {
+  const s = state.scores[bias.name];
+  if (!s) return 10;
+  const correct = s.correct || 0;
+  const incorrect = s.incorrect || 0;
+  const mastered = correct >= 3 && correct > incorrect * 2;
+  if (mastered) return 1;
+  if (incorrect > correct) return 15;
+  if (correct === 1) return 7;
+  if (correct === 2) return 4;
+  return 2;
+}
+
+function pickBias() {
+  const weights = BIASES.map(b => getWeight(b));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < BIASES.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return BIASES[i];
+  }
+  return BIASES[BIASES.length - 1];
+}
+
+function pickWrongAnswers(correct, count) {
+  const pool = BIASES.filter(b => b.name !== correct.name);
+  const shuffled = pool.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+function updateStats() {
+  const mastered = getMastered();
+  document.getElementById('statStreak').textContent = state.streak;
+  document.getElementById('statScore').textContent = state.totalCorrect;
+  document.getElementById('statMastered').textContent = mastered;
+  const pct = Math.round((mastered / BIASES.length) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function nextQuestion() {
+  answered = false;
+  document.getElementById('feedbackEl').className = 'feedback';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  currentBias = pickBias();
+  const wrongs = pickWrongAnswers(currentBias, 3);
+  const choices = [currentBias, ...wrongs].sort(() => Math.random() - 0.5);
+  const letters = ['A', 'B', 'C', 'D'];
+
+  const card = document.getElementById('questionCard');
+  card.className = 'question-card card-enter';
+  setTimeout(() => card.className = 'question-card', 400);
+
+  const isMastered = (() => {
+    const s = state.scores[currentBias.name];
+    if (!s) return false;
+    return (s.correct || 0) >= 3 && (s.correct || 0) > (s.incorrect || 0) * 2;
+  })();
+
+  document.getElementById('biasName').innerHTML = currentBias.name + (isMastered ? '<span class="mastered-badge">✓ mastered</span>' : '');
+  const akaEl = document.getElementById('biasAka');
+  akaEl.textContent = currentBias.aka ? 'Also known as: ' + currentBias.aka : '';
+
+  const choicesEl = document.getElementById('choicesEl');
+  choicesEl.innerHTML = '';
+  choices.forEach((bias, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="choice-letter">${letters[i]}</span><span>${bias.def}</span>`;
+    btn.onclick = () => handleAnswer(bias, btn, choices);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function handleAnswer(chosen, btn, choices) {
+  if (answered) return;
+  answered = true;
+  const isCorrect = chosen.name === currentBias.name;
+
+  if (!state.scores[currentBias.name]) state.scores[currentBias.name] = {};
+  if (isCorrect) {
+    state.scores[currentBias.name].correct = (state.scores[currentBias.name].correct || 0) + 1;
+    state.totalCorrect++;
+    state.streak++;
+    if (state.streak > 0 && state.streak % 5 === 0) showToast('🔥 ' + state.streak + ' in a row!');
+  } else {
+    state.scores[currentBias.name].incorrect = (state.scores[currentBias.name].incorrect || 0) + 1;
+    state.streak = 0;
+  }
+  saveState();
+  updateStats();
+
+  const allBtns = document.querySelectorAll('.choice');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    const def = b.querySelector('span:last-child').textContent;
+    const matchBias = choices.find(c => c.def === def);
+    if (matchBias && matchBias.name === currentBias.name) {
+      b.classList.add('correct');
+    } else if (b === btn && !isCorrect) {
+      b.classList.add('wrong');
+    } else {
+      b.classList.add('dimmed');
+    }
+  });
+
+  const fb = document.getElementById('feedbackEl');
+  const fbHead = document.getElementById('feedbackHead');
+  const fbBody = document.getElementById('feedbackBody');
+
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    fbHead.textContent = 'Correct!';
+    const s = state.scores[currentBias.name];
+    const correct = s.correct || 0;
+    if (correct >= 3) fbBody.textContent = 'You\'ve mastered this one.';
+    else fbBody.textContent = `You've gotten this right ${correct} time${correct !== 1 ? 's' : ''}.`;
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    fbHead.textContent = 'Not quite.';
+    fbBody.textContent = '"' + currentBias.name + '" — ' + currentBias.def;
+  }
+
+  document.getElementById('nextBtn').className = 'next-btn show';
+}
+
+function resetProgress() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state = { scores: {}, totalCorrect: 0, streak: 0 };
+  saveState();
+  updateStats();
+  nextQuestion();
+}
+
+document.addEventListener('keydown', e => {
+  if (!answered) {
+    const map = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, '1': 0, '2': 1, '3': 2, '4': 3 };
+    const idx = map[e.key.toLowerCase()];
+    if (idx !== undefined) {
+      const btns = document.querySelectorAll('.choice');
+      if (btns[idx]) btns[idx].click();
+    }
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    nextQuestion();
+  }
+});
+
+updateStats();
+nextQuestion();
+</script>
+</body>
+</html>
